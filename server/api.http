@@ -67,6 +67,3 @@ GET {{baseUrl}}/v1/logs/alerts
 
 ### Get Reliability & Observability Reports
 GET {{baseUrl}}/v1/logs/reports
-
-### Delete Log by ID
-DELETE {{baseUrl}}/v1/logs/{{logId}}
