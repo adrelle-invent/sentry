@@ -8,7 +8,12 @@ from app.logs.router import router as logs_router
 
 # from app.issues.router import router as issues_router
 from app.shared.cache import redis
+from app.shared.logger import configure_logging, get_logger
 from app.shared.rate_limiter import limiter
+
+configure_logging()
+
+logger = get_logger(__name__)
 
 
 def create_app() -> FastAPI:
@@ -41,8 +46,10 @@ def create_app() -> FastAPI:
     async def clear_redis():
         try:
             await redis.flushdb()
+            logger.info("Redis cleared")
             return {"status": "cleared"}
         except Exception as e:
+            logger.exception("Error clearing Redis")
             return {"status": "error", "message": str(e)}
 
     return app
