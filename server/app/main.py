@@ -1,20 +1,26 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.logs.router import router as logs_router
 
 # from app.issues.router import router as issues_router
 from app.shared.cache import redis
+from app.shared.rate_limiter import limiter
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="AD. Sentry")
 
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
+    app.state.limiter = limiter
+    app.add_exception_handler(
+        RateLimitExceeded,
+        _rate_limit_exceeded_handler,  # type: ignore
+    )
+    app.add_middleware(SlowAPIMiddleware)
 
-    # Add CORS Middleware to support frontend requests
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000"],
@@ -27,7 +33,8 @@ def create_app() -> FastAPI:
     # app.include_router(issues_router)
 
     @app.get("/healthz")
-    async def health():
+    @limiter.exempt
+    async def health(request: Request):
         return {"status": "ok"}
 
     @app.get("/clear-redis")
