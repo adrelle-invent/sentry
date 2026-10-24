@@ -1,23 +1,27 @@
 import io
-import re
-import hashlib
-from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any, Optional
-from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from app.database import supabase
-from app.shared.cache import Cache
-from app.issues.schemas import IssueResponse, IssueEvidence
+from fastapi.responses import StreamingResponse
+from reportlab.lib import colors
 
 # ReportLab imports for generating professional PDFs
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
+from reportlab.platypus import (
+    KeepTogether,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
+
+from app.core.cache import Cache
+from app.core.database import supabase
+from app.modules.issues.schemas import IssueEvidence, IssueResponse
 
 # Define base impact & likelihood parameters for risk scoring
 RULE_DEFINITIONS = [
@@ -187,7 +191,7 @@ class IssueService:
         return "LOW"
 
     @classmethod
-    async def detect_issues(cls) -> List[IssueResponse]:
+    async def detect_issues(cls) -> list[IssueResponse]:
         """
         Scans all logs in the database, runs the detection rules, and returns grouped issues.
         Includes a robust set of fallback/seeded issues if the database has no logs.
@@ -206,8 +210,8 @@ class IssueService:
         response = await supabase.table("logs").select("*").execute()
         logs = response.data or []
 
-        detected_issues_map: Dict[str, Dict[str, Any]] = {}
-        log_match_counts: Dict[str, int] = {}
+        detected_issues_map: dict[str, dict[str, Any]] = {}
+        log_match_counts: dict[str, int] = {}
 
         # 1. Run detection rules against real logs
         for log in logs:
@@ -251,8 +255,8 @@ class IssueService:
                     if log.get("created_at") and log.get("created_at") > (detected_issues_map[scenario_key]["latest_timestamp"] or ""):
                         detected_issues_map[scenario_key]["latest_timestamp"] = log.get("created_at")
 
-        issues_result: List[IssueResponse] = []
-        issue_counters: Dict[str, int] = {} # Keeps track of serial per Category code
+        issues_result: list[IssueResponse] = []
+        issue_counters: dict[str, int] = {} # Keeps track of serial per Category code
 
         # Helper to get next code string (e.g. CRI-DI-001)
         def generate_issue_id(severity: str, category: str) -> str:
@@ -288,7 +292,7 @@ class IssueService:
                 business_impact=rule["business_impact"],
                 recommendations=rule["recommendations"],
                 evidence=IssueEvidence(log_ids=log_ids, request_ids=request_ids),
-                timestamp=info["latest_timestamp"] or datetime.now(timezone.utc).isoformat()
+                timestamp=info["latest_timestamp"] or datetime.now(UTC).isoformat()
             )
             issues_result.append(issue)
 
@@ -395,7 +399,7 @@ class IssueService:
                         business_impact=s["business_impact"],
                         recommendations=s["recommendations"],
                         evidence=IssueEvidence(log_ids=s["log_ids"], request_ids=s["request_ids"]),
-                        timestamp=(datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
+                        timestamp=(datetime.now(UTC) - timedelta(minutes=45)).isoformat()
                     )
                 )
 
@@ -409,11 +413,11 @@ class IssueService:
     @classmethod
     async def list_issues(
         cls,
-        issue_id: Optional[str] = None,
-        severity: Optional[str] = None,
-        category: Optional[str] = None,
-        endpoint: Optional[str] = None
-    ) -> List[IssueResponse]:
+        issue_id: str | None = None,
+        severity: str | None = None,
+        category: str | None = None,
+        endpoint: str | None = None
+    ) -> list[IssueResponse]:
         """
         Retrieves detected issues and applies combined filters.
         """
@@ -433,9 +437,9 @@ class IssueService:
     @classmethod
     async def generate_pdf_report(
         cls,
-        filters: Optional[Dict[str, Any]] = None,
-        date_range: Optional[Dict[str, str]] = None,
-        issue_ids: Optional[List[str]] = None
+        filters: dict[str, Any] | None = None,
+        date_range: dict[str, str] | None = None,
+        issue_ids: list[str] | None = None
     ) -> StreamingResponse:
         """
         Generates a professional ReportLab PDF audit report based on filters.

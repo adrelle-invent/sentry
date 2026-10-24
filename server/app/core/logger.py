@@ -1,12 +1,9 @@
-# app/shared/logger.py
 import logging
 import sys
 
 import structlog
 
-from app.config import (
-    settings,  # Assuming your settings module tracks environment
-)
+from app.core.config import settings
 
 
 def configure_logging() -> None:

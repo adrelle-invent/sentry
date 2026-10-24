@@ -1,17 +1,19 @@
 import os
+
 # Force empty Supabase credentials so it instantly falls back to mock client
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_KEY"] = ""
 # Prevent DNS resolution lookup delays on host 'redis' when running local tests
 os.environ["REDIS_HOST"] = "127.0.0.1"
 
-import pytest
-from app.database import init_db
-from app.issues.service import IssueService
-from app.issues.schemas import IssueResponse, PDFExportRequest
-from app.main import app
-
 import asyncio
+
+import pytest
+
+from app.core.database import init_db
+from app.modules.issues.schemas import IssueResponse
+from app.modules.issues.service import IssueService
+
 
 @pytest.fixture(autouse=True, scope="function")
 def setup_db():

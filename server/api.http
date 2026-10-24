@@ -1,16 +1,13 @@
-@baseUrl = https://localhost/api
+# @baseUrl = https://localhost/api
 # Alternative direct URL (bypassing Nginx):
-# @baseUrl = http://localhost:3001
+@baseUrl = http://localhost:3001
 
-@logId = 0aebd135-cdc1-47eb-b039-f2a5c55a75a5
+@logId = 8a744ab2-db0c-4754-8448-7368038dea0d
 
 ### Health Check
 GET {{baseUrl}}/healthz
 
-### Clear Redis Cache
-GET {{baseUrl}}/clear-redis
-
-### Create Log
+### Create log
 # @name createLog
 POST {{baseUrl}}/v1/logs
 Content-Type: application/json
@@ -28,7 +25,7 @@ Content-Type: application/json
   }
 }
 
-### Create Error Log
+### Create error log
 POST {{baseUrl}}/v1/logs
 Content-Type: application/json
 
@@ -44,26 +41,26 @@ Content-Type: application/json
   }
 }
 
-### List All Logs
+### Get all logs
 GET {{baseUrl}}/v1/logs
 
-### Filter Logs by Service and Level
+### Filter logs by service and level
 GET {{baseUrl}}/v1/logs?service=payment-api&level=INFO
 
-### Get Single Log by ID
+### Get single log by id
 GET {{baseUrl}}/v1/logs/{{logId}}
 
-### Get Log Statistics (Aggregates & Error Rates)
-GET {{baseUrl}}/v1/logs/stats
+# ### Get logs aggregates and error rates
+# GET {{baseUrl}}/v1/logs/stats
 
-### Get 24-Hour Log Trends
-GET {{baseUrl}}/v1/logs/trends
+# ### Get 24-hour log trends
+# GET {{baseUrl}}/v1/logs/trends
 
-### Get Detected Issues (Fingerprinted Groups)
-GET {{baseUrl}}/v1/logs/issues
+# ### Get Detected Issues (Fingerprinted Groups)
+# GET {{baseUrl}}/v1/logs/issues
 
-### Get Active High-Rate Alerts
-GET {{baseUrl}}/v1/logs/alerts
+# ### Get Active High-Rate Alerts
+# GET {{baseUrl}}/v1/logs/alerts
 
-### Get Reliability & Observability Reports
-GET {{baseUrl}}/v1/logs/reports
+# ### Get Reliability & Observability Reports
+# GET {{baseUrl}}/v1/logs/reports

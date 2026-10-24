@@ -11,6 +11,13 @@ class LogCreate(BaseModel):
     trace_id: str | None = None
     metadata: dict[str, Any] | None = None
 
+
 class LogResponse(LogCreate):
     id: str
     created_at: str
+
+
+class LogQueryFilter(BaseModel):
+    service: str | None = None
+    level: str | None = None
+    limit: int = Field(default=100, ge=1, le=100)

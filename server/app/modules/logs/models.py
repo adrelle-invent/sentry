@@ -5,7 +5,7 @@ from sqlalchemy import JSON, DateTime, String, Text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
+from app.core.database import Base
 
 
 class LogModel(Base):
@@ -35,7 +35,7 @@ class LogModel(Base):
             "log_message": self.log_message,
             "trace_id": self.trace_id,
             "metadata": self.log_metadata,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
         }
 
     @classmethod
