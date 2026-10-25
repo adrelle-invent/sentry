@@ -5,7 +5,7 @@ description = "Internal monitoring and compliance engine tracking system telemet
 authors = [{ name = "Angelo", email = "angelo@example.com" }]
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi[standard]>=0.136.0",
+    "fastapi[standard]>=0.162.0",
     "pydantic-settings>=2.14.2",
     "uvicorn>=0.40.0",
     "sqlalchemy[asyncio]>=2.0.51",
