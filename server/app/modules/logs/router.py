@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.modules.logs.schemas import LogCreate, LogResponse
+from app.core.database import SessionDep, TxSessionDep
+from app.modules.logs.schemas import Filters, LogCreate, LogResponse, Pagination
 from app.modules.logs.service import LogService
 
 router = APIRouter(prefix="/v1/logs", tags=["logs"])
@@ -10,32 +11,38 @@ router = APIRouter(prefix="/v1/logs", tags=["logs"])
 LogServiceDep = Annotated[LogService, Depends()]
 
 
-@router.get("", response_model=list[LogResponse])
+# TODO: fix response_model
+@router.get("")
 async def index(
     request: Request,
+    db: SessionDep,
     log_service: LogServiceDep,
-    service: str | None = None,
-    level: str | None = None,
+    pagination: Annotated[Pagination, Query()],
+    filters: Annotated[Filters, Query()],
 ):
-    return await log_service.get_logs(service, level)
+    return await log_service.get_logs(
+        db=db, pagination=pagination, filters=filters
+    )
 
 
 @router.get("/{log_id}", response_model=LogResponse)
 async def show(
     request: Request,
+    db: SessionDep,
     log_service: LogServiceDep,
     log_id: str,
 ):
-    return await log_service.get_log(log_id)
+    return await log_service.get_log(db=db, log_id=log_id)
 
 
-@router.post("", response_model=LogResponse)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def store(
     request: Request,
+    db: TxSessionDep,
     log_service: LogServiceDep,
     log: LogCreate,
 ):
-    return await log_service.create_log(log)
+    return await log_service.create_log(db=db, log_data=log)
 
 
 # @router.get(

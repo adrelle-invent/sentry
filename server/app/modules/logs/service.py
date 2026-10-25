@@ -2,67 +2,75 @@ from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.engine.result import Result
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.selectable import Select
 
 from app.core.cache import CacheDep
-from app.core.database import SessionDep
+from app.core.database import SessionDep, TxSessionDep
 from app.core.logger import get_logger
-from app.modules.logs.exceptions import LogNotFoundError, LogStoreError
+from app.modules.logs.exceptions import LogNotFoundError
 from app.modules.logs.models import LogModel
-from app.modules.logs.schemas import LogCreate
+from app.modules.logs.schemas import Filters, LogCreate, Pagination
 
 logger = get_logger(__name__)
 
 
 class LogService:
-    def __init__(self, db: SessionDep, cache: CacheDep) -> None:
-        self.db = db
+    def __init__(self, cache: CacheDep) -> None:
         self.cache = cache
 
+    # TODO: fix return type
     async def get_logs(
-        self, service: str | None = None, level: str | None = None
-    ) -> list[dict]:
-        cache_key = f"logs:service:{service}:level:{level}"
-
+        self, db: AsyncSession, filters: Filters, pagination: Pagination
+    ) -> dict:
         async def _fetch_from_db():
-            limit = 100
             query: Select[tuple[LogModel]] = (
                 select(LogModel)
                 .order_by(LogModel.created_at.desc())
-                .limit(limit)
+                .limit(pagination.limit)
+                .offset(pagination.offset)
             )
 
-            if service:
-                query = query.where(LogModel.service == service)
+            if filters.service:
+                query = query.where(LogModel.service == filters.service)
 
-            if level:
-                query = query.where(LogModel.level == level)
+            if filters.level:
+                query = query.where(LogModel.level == filters.level)
 
-            result: Result[tuple[LogModel]] = await self.db.execute(query)
+            result: Result[tuple[LogModel]] = await db.execute(query)
             logs: Sequence[LogModel] = result.scalars().all()
 
-            data = [log.to_dict() for log in logs]
-
-            return data
+            return {
+                "data": [log.to_dict() for log in logs],
+                "limit": pagination.limit,
+                "offset": pagination.offset,
+                # "next_offset": next_offset,
+                # "prev_offset": prev_offset,
+                # total: total_count
+            }
 
         return await self.cache.get_or_set_with_lock(
-            cache_key,
+            f"logs:service:{filters.service}:level:{filters.level}:limit:{pagination.limit}:offset:{pagination.offset}",
             _fetch_from_db,
         )
 
-    async def get_log(self, log_id: str) -> dict:
+    async def get_log(self, db: SessionDep, log_id: str) -> dict:
+        not_found_key = f"logs:not_found:{log_id}"
+
+        if await self.cache.has(not_found_key):
+            raise LogNotFoundError(f"Log with id {log_id} not found")
+
         async def _fetch_from_db():
-            result = await self.db.execute(
+            result = await db.execute(
                 select(LogModel).where(LogModel.id == log_id)
             )
             log = result.scalar_one_or_none()
 
             if not log:
+                await self.cache.set(not_found_key, "1", expire_seconds=30)
                 raise LogNotFoundError(f"Log with id {log_id} not found")
 
-            data = log.to_dict()
-
-            return data
+            return log.to_dict()
 
         return await self.cache.get_or_set_with_lock(
             f"log:{log_id}",
@@ -70,27 +78,10 @@ class LogService:
             expire_seconds=60,
         )
 
-    async def create_log(self, log_data: LogCreate) -> dict:
-        try:
-            dump = log_data.model_dump()
-
-            log = LogModel(
-                service=dump["service"],
-                environment=dump["environment"],
-                level=dump["level"],
-                log_message=dump["log_message"],
-                trace_id=dump.get("trace_id"),
-                log_metadata=dump.get("metadata"),
-            )
-            self.db.add(log)
-            await self.db.commit()
-            await self.db.refresh(log)
-
-            # TODO: check if we can append only to cache
-            # or move process to worker
-        except Exception as e:
-            await self.db.rollback()
-            raise LogStoreError(f"Failed to insert log: {e}") from e
+    async def create_log(self, db: TxSessionDep, log_data: LogCreate) -> dict:
+        # TODO: move to worker (batched)
+        db.add(LogModel(**log_data.model_dump()))
+        return {"status": "success", "queue_id": "msg_id"}
 
         # await self.cache.forget("logs:service::level:")
         # await self.cache.forget(f"logs:service:{log.service}:level:{log.level}")
@@ -100,8 +91,6 @@ class LogService:
         # await self.cache.forget("logs:issues")
         # await self.cache.forget("logs:alerts")
         # await self.cache.forget("logs:reports")
-
-        return log.to_dict()
 
     # @staticmethod
     # async def get_stats(db: AsyncSession) -> dict:

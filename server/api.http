@@ -2,7 +2,7 @@
 # Alternative direct URL (bypassing Nginx):
 @baseUrl = http://localhost:3001
 
-@logId = 8a744ab2-db0c-4754-8448-7368038dea0d
+@logId = a8c2c449-d33a-460f-ba7e-330e52222420
 
 ### Health Check
 GET {{baseUrl}}/healthz
@@ -42,10 +42,11 @@ Content-Type: application/json
 }
 
 ### Get all logs
-GET {{baseUrl}}/v1/logs
+GET {{baseUrl}}/v1/logs?limit=5
+X-API-Key: your_api_key_here
 
 ### Filter logs by service and level
-GET {{baseUrl}}/v1/logs?service=payment-api&level=INFO
+GET {{baseUrl}}/v1/logs?service=payment-api&level=INFO&limit=5&offset=0
 
 ### Get single log by id
 GET {{baseUrl}}/v1/logs/{{logId}}

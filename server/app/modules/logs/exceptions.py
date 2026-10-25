@@ -1,6 +1,5 @@
-class LogNotFoundError(Exception):
-    pass
+from app.core.exceptions import AppError
 
 
-class LogStoreError(Exception):
-    pass
+class LogNotFoundError(AppError):
+    status_code = 404

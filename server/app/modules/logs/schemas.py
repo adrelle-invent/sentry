@@ -17,7 +17,10 @@ class LogResponse(LogCreate):
     created_at: str
 
 
-class LogQueryFilter(BaseModel):
+class Pagination(BaseModel):
+    limit: int = Field(default=100, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+class Filters(BaseModel):
     service: str | None = None
     level: str | None = None
-    limit: int = Field(default=100, ge=1, le=100)
