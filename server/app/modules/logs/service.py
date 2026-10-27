@@ -1,6 +1,8 @@
-from collections.abc import Sequence
+import hashlib
+import re
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.engine.result import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.selectable import Select
@@ -31,22 +33,26 @@ class LogService:
                 .offset(pagination.offset)
             )
 
+            count_query = select(func.count()).select_from(LogModel)
+
             if filters.service:
                 query = query.where(LogModel.service == filters.service)
+                count_query = count_query.where(LogModel.service == filters.service)
 
             if filters.level:
                 query = query.where(LogModel.level == filters.level)
+                count_query = count_query.where(LogModel.level == filters.level)
 
             result: Result[tuple[LogModel]] = await db.execute(query)
-            logs: Sequence[LogModel] = result.scalars().all()
+
+            total_result = await db.execute(count_query)
+            total = total_result.scalar_one()
 
             return {
-                "data": [log.to_dict() for log in logs],
+                "data": [log.to_dict() for log in result.scalars().all()],
                 "limit": pagination.limit,
                 "offset": pagination.offset,
-                # "next_offset": next_offset,
-                # "prev_offset": prev_offset,
-                # total: total_count
+                "total": total,
             }
 
         return await self.cache.get_or_set_with_lock(
@@ -83,15 +89,164 @@ class LogService:
         db.add(LogModel(**log_data.model_dump()))
         return {"status": "success", "queue_id": "msg_id"}
 
-        # await self.cache.forget("logs:service::level:")
-        # await self.cache.forget(f"logs:service:{log.service}:level:{log.level}")
-        # # Clear stats cache if any
-        # await self.cache.forget("logs:stats")
-        # await self.cache.forget("logs:trends")
-        # await self.cache.forget("logs:issues")
-        # await self.cache.forget("logs:alerts")
-        # await self.cache.forget("logs:reports")
+    async def get_stats(self, db: AsyncSession) -> dict:
+        async def _fetch_from_db():
+            result: Result[tuple[LogModel]] = await db.execute(select(LogModel))
+            logs = result.scalars().all()
 
+            total_count = len(logs)
+            by_level: dict[str, int] = {}
+            by_service: dict[str, int] = {}
+            by_environment: dict[str, int] = {}
+
+            for log in logs:
+                lvl = (log.level or "INFO").upper()
+                svc = log.service or "unknown"
+                env = log.environment or "unknown"
+
+                by_level[lvl] = by_level.get(lvl, 0) + 1
+                by_service[svc] = by_service.get(svc, 0) + 1
+                by_environment[env] = by_environment.get(env, 0) + 1
+
+            error_count = by_level.get("ERROR", 0) + by_level.get("CRITICAL", 0)
+            error_rate = (error_count / total_count * 100) if total_count > 0 else 0.0
+
+            return {
+                "total_count": total_count,
+                "by_level": by_level,
+                "by_service": by_service,
+                "by_environment": by_environment,
+                "error_rate": round(error_rate, 2),
+            }
+
+        return await self.cache.get_or_set_with_lock(
+            "logs:stats",
+            _fetch_from_db,
+            expire_seconds=10,
+        )
+
+    async def get_trends(self, db: AsyncSession) -> list[dict]:
+        async def _fetch_from_db():
+            result: Result[tuple[LogModel]] = await db.execute(select(LogModel))
+            logs = result.scalars().all()
+
+            now = datetime.now(UTC)
+            buckets: dict[str, dict] = {}
+            for i in range(24):
+                dt = now - timedelta(hours=i)
+                key = dt.strftime("%Y-%m-%d %H:00")
+                buckets[key] = {
+                    "timestamp": key,
+                    "info_count": 0,
+                    "warning_count": 0,
+                    "error_count": 0,
+                    "total_count": 0,
+                }
+
+            for log in logs:
+                log_dt = log.created_at
+                if not log_dt:
+                    continue
+                if isinstance(log_dt, str):
+                    ts_str = log_dt
+                    if ts_str.endswith("Z"):
+                        ts_str = ts_str[:-1] + "+00:00"
+                    try:
+                        log_dt = datetime.fromisoformat(ts_str)
+                    except Exception:
+                        continue
+                elif log_dt.tzinfo is None:
+                    log_dt = log_dt.replace(tzinfo=UTC)
+
+                diff = now - log_dt
+                if diff.total_seconds() <= 24 * 3600:
+                    key = log_dt.strftime("%Y-%m-%d %H:00")
+                    if key in buckets:
+                        lvl = (log.level or "INFO").upper()
+                        buckets[key]["total_count"] += 1
+                        if lvl in ("ERROR", "CRITICAL"):
+                            buckets[key]["error_count"] += 1
+                        elif lvl == "WARNING":
+                            buckets[key]["warning_count"] += 1
+                        else:
+                            buckets[key]["info_count"] += 1
+
+            return sorted(buckets.values(), key=lambda x: x["timestamp"])
+
+        return await self.cache.get_or_set_with_lock(
+            "logs:trends",
+            _fetch_from_db,
+            expire_seconds=10,
+        )
+
+    async def get_issues(self, db: AsyncSession) -> list[dict]:
+        async def _fetch_from_db():
+            result: Result[tuple[LogModel]] = await db.execute(select(LogModel))
+            logs = result.scalars().all()
+
+            groups: dict[str, dict] = {}
+
+            def normalize_msg(msg: str) -> str:
+                if not msg:
+                    return "Empty log message"
+                msg = re.sub(r"\d+", "X", msg)
+                msg = re.sub(
+                    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                    "UUID",
+                    msg,
+                )
+                return msg.strip()
+
+            for log in logs:
+                svc = log.service or "unknown"
+                lvl = (log.level or "INFO").upper()
+                env = log.environment or "unknown"
+                raw_msg = log.log_message or ""
+                norm_msg = normalize_msg(raw_msg)
+
+                key = f"{svc}:{lvl}:{env}:{norm_msg}"
+                created_at = (
+                    log.created_at.isoformat()
+                    if isinstance(log.created_at, datetime)
+                    else str(log.created_at)
+                    if log.created_at
+                    else None
+                )
+
+                if key not in groups:
+                    issue_id = hashlib.md5(key.encode()).hexdigest()
+                    groups[key] = {
+                        "id": f"iss_{issue_id[:12]}",
+                        "service": svc,
+                        "level": lvl,
+                        "environment": env,
+                        "message": raw_msg if len(raw_msg) < 100 else raw_msg[:97] + "...",
+                        "count": 0,
+                        "first_seen": created_at,
+                        "last_seen": created_at,
+                        "status": "Active" if lvl in ("ERROR", "CRITICAL") else "Monitored",
+                        "assigned_to": "Unassigned",
+                    }
+
+                group = groups[key]
+                group["count"] += 1
+                if created_at:
+                    if not group["first_seen"] or created_at < group["first_seen"]:
+                        group["first_seen"] = created_at
+                    if not group["last_seen"] or created_at > group["last_seen"]:
+                        group["last_seen"] = created_at
+
+            return list(groups.values())
+
+        return await self.cache.get_or_set_with_lock(
+            "logs:issues",
+            _fetch_from_db,
+            expire_seconds=10,
+        )
+
+    # --------------------------------------------------------------------------
+    # Legacy commented-out static methods (kept for reference)
+    # --------------------------------------------------------------------------
     # @staticmethod
     # async def get_stats(db: AsyncSession) -> dict:
     #     cached_data = await Cache.get("logs:stats")

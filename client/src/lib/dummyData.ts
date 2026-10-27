@@ -827,17 +827,35 @@ export const getDummyReports = async (): Promise<Report[]> => {
 };
 
 // Logs methods for Logs Explorer
+export interface PaginatedLogs {
+  data: Log[];
+  limit: number;
+  offset: number;
+  next: string | null;
+  prev: string | null;
+  total: number;
+}
+
 export const getDummyLogs = async (
   service?: string,
   level?: string,
-): Promise<Log[]> => {
+): Promise<PaginatedLogs> => {
   await new Promise((resolve) => setTimeout(resolve, 80));
 
-  return liveLogs.filter((log) => {
+  const filtered = liveLogs.filter((log) => {
     if (service && log.service !== service) return false;
     if (level && log.level !== level) return false;
     return true;
   });
+
+  return {
+    data: filtered,
+    limit: 100,
+    offset: 0,
+    next: null,
+    prev: null,
+    total: filtered.length,
+  };
 };
 
 export const getDummyLog = async (id: string): Promise<Log> => {

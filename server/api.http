@@ -42,7 +42,7 @@ Content-Type: application/json
 }
 
 ### Get all logs
-GET {{baseUrl}}/v1/logs?limit=5
+GET {{baseUrl}}/v1/logs?limit=5&offset=10
 X-API-Key: your_api_key_here
 
 ### Filter logs by service and level

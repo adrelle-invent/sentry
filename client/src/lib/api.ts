@@ -26,6 +26,15 @@ export interface Log {
   created_at: string;
 }
 
+export interface PaginatedLogs {
+  data: Log[];
+  limit: number;
+  offset: number;
+  next: string | null;
+  prev: string | null;
+  total: number;
+}
+
 export interface Stats {
   total_count: number;
   by_level: Record<string, number>;
@@ -123,7 +132,7 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
 }
 
 export const api = {
-  getLogs: (service?: string, level?: string): Promise<Log[]> => {
+  getLogs: (service?: string, level?: string): Promise<PaginatedLogs> => {
     if (isDemoMode) {
       return getDummyLogs(service, level);
     }
@@ -131,7 +140,7 @@ export const api = {
     if (service) params.append("service", service);
     if (level) params.append("level", level);
     const queryString = params.toString() ? `?${params.toString()}` : "";
-    return fetchApi<Log[]>(`/logs${queryString}`);
+    return fetchApi<PaginatedLogs>(`/logs${queryString}`);
   },
 
   getLog: (id: string): Promise<Log> => {

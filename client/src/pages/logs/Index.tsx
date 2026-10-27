@@ -45,10 +45,11 @@ export default function LogsExplorer() {
   const loadLogs = async () => {
     setLoading(true);
     try {
-      const data = await api.getLogs(
+      const response = await api.getLogs(
         serviceFilter || undefined,
         levelFilter || undefined,
       );
+      const data = response.data;
       setLogs(data);
 
       // Collect unique services for filter list
