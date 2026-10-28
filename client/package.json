@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ad-technology-inc/design-system": "^3.0.0",
+    "@adrelle/design-system": "^3.3.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@tailwindcss/vite": "^4.3.1",
     "class-variance-authority": "^0.7.1",

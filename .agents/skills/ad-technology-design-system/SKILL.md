@@ -32,12 +32,11 @@ Integrate the design system into your stylesheet:
 ```css
 @import "tailwindcss";
 
-/* Optional: if your project uses class-based dark mode */
-@custom-variant dark (&:is(.dark *));
-
 /* Import design system theme & components */
 @import "@ad-technology-inc/design-system/app.css";
 ```
+
+Theme switching is driven entirely by CSS variables. Toggling `.dark` on `:root` (`<html class="dark">`) automatically switches all semantic variables (`--background`, `--card`, `--border`, `--foreground`, etc.) without needing `dark:` utility prefixes.
 
 *(For projects without Tailwind, import the clean CSS bundle directly: `@import "@ad-technology-inc/design-system";`)*
 

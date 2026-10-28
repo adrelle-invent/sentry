@@ -1,10 +1,6 @@
 @import "tailwindcss";
 
-/* Class-based dark mode */
-@custom-variant dark (&:is(.dark *));
-
-/* Design system theme tokens + all component CSS */
-@import "@ad-technology-inc/design-system/app.css";
+@import "@adrelle/design-system/app.min.css";
 
 /* Additional font */
 @import "@fontsource-variable/geist";
