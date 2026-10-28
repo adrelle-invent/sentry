@@ -1,6 +1,4 @@
-import { Link } from "react-router-dom";
 import AppLogoIcon from "@/components/AppLogoIcon";
-import { routes } from "@/routes/manifest";
 
 export default function Footer() {
     return (
