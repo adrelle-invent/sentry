@@ -137,7 +137,7 @@ async def client():
 async def test_health_not_rate_limited(client: AsyncClient):
     # Make many requests to ensure it's not rate-limited
     for i in range(50):  # Arbitrarily large number
-        response = await client.get("/health")
+        response = await client.get("/healthz")
         assert response.status_code == 200, (
             f"Health check failed on request {i}: {response.text}"
         )
