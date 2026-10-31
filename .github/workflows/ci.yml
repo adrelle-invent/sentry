@@ -51,4 +51,4 @@ jobs:
 
       - name: Run backend tests
         run: |
-          pytest
+          uv run pytest
