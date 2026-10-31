@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   frontend:
@@ -28,3 +28,27 @@ jobs:
 
       - name: Build frontend
         run: pnpm build
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-path: |
+            server/pyproject.toml
+            server/uv.lock
+      - name: Install dependencies
+        run: |
+          uv sync --system --locked
+
+      - name: Run backend tests
+        run: |
+          pytest
