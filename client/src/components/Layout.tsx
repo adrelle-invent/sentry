@@ -17,7 +17,7 @@ import {
 
 const NAV_ITEMS = [
   { to: routes.dashboard.path, label: "Dashboard", Icon: LayoutDashboard, end: true },
-  { to: routes.logs.path, label: "Explorer", Icon: Database },
+  { to: routes.events.path, label: "Explorer", Icon: Database },
   { to: routes.issues.path, label: "Issues", Icon: AlertTriangle },
   { to: routes.alerts.path, label: "Alerts", Icon: Bell },
   { to: routes.reports.path, label: "Reports", Icon: FileText },

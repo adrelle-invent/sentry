@@ -5,11 +5,11 @@ from fastapi import FastAPI
 from sqlalchemy import insert
 
 from app.core.database import async_session_factory
-from app.modules.logs.models import LogModel
+from app.modules.events.models import EventModel
 
 
 # TODO: validate
-class LogBatchWorker:
+class EventBatchWorker:
     def __init__(
         self, batch_size: int = 100, flush_interval: float = 2.0
     ) -> None:
@@ -23,7 +23,7 @@ class LogBatchWorker:
         self._task = asyncio.create_task(self._worker_loop())
 
     async def stop(self) -> None:
-        """Gracefully shuts down the worker and flushes any remaining logs."""
+        """Gracefully shuts down the worker and flushes any remaining events."""
         if self._task:
             self._task.cancel()
             try:
@@ -32,9 +32,9 @@ class LogBatchWorker:
                 pass
             await self._flush_remaining()
 
-    async def push(self, log_data: dict) -> None:
-        """Instantly queues a log without blocking the HTTP response."""
-        await self.queue.put(log_data)
+    async def push(self, event_data: dict) -> None:
+        """Instantly queues a event without blocking the HTTP response."""
+        await self.queue.put(event_data)
 
     async def _worker_loop(self) -> None:
         buffer: list[dict] = []
@@ -46,7 +46,7 @@ class LogBatchWorker:
                 elapsed = asyncio.get_running_loop().time() - last_flush_time
                 timeout = max(0.05, self.flush_interval - elapsed)
 
-                # Wait for the next log item or hit the 2-second timeout
+                # Wait for the next event item or hit the 2-second timeout
                 item = await asyncio.wait_for(self.queue.get(), timeout=timeout)
                 buffer.append(item)
                 self.queue.task_done()
@@ -68,10 +68,10 @@ class LogBatchWorker:
         """Executes the ultra-fast bulk insert into PostgreSQL."""
         async with async_session_factory() as db:
             async with db.begin():
-                await db.execute(insert(LogModel), buffer)
+                await db.execute(insert(EventModel), buffer)
 
     async def _flush_remaining(self) -> None:
-        """Ensures zero log loss when the server stops."""
+        """Ensures zero event loss when the server stops."""
         buffer = []
         while not self.queue.empty():
             buffer.append(self.queue.get_nowait())
@@ -81,11 +81,11 @@ class LogBatchWorker:
 
 
 # Global instance to share across your app
-log_worker = LogBatchWorker(batch_size=100, flush_interval=2.0)
+event_worker = EventBatchWorker(batch_size=100, flush_interval=2.0)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await log_worker.start()
+    await event_worker.start()
     yield
-    await log_worker.stop()
+    await event_worker.stop()

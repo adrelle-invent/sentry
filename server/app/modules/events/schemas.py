@@ -3,16 +3,16 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-class LogCreate(BaseModel):
+class EventCreate(BaseModel):
     service: str = Field(..., json_schema_extra={"example": "chat-api"})
     environment: str = Field(..., json_schema_extra={"example": "production"})
     level: str = Field(..., json_schema_extra={"example": "ERROR"})
-    log_message: str
+    event_message: str
     trace_id: str | None = None
     metadata: dict[str, Any] | None = None
 
 
-class LogResponse(LogCreate):
+class EventResponse(EventCreate):
     id: str
     created_at: str
 

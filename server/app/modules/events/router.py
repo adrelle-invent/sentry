@@ -3,12 +3,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 
 from app.core.database import SessionDep, TxSessionDep
-from app.modules.logs.schemas import Filters, LogCreate, LogResponse, Pagination
-from app.modules.logs.service import LogService
+from app.modules.events.schemas import (
+    EventCreate,
+    EventResponse,
+    Filters,
+    Pagination,
+)
+from app.modules.events.service import EventService
 
-router = APIRouter(prefix="/v1/logs", tags=["logs"])
+router = APIRouter(prefix="/v1/events", tags=["events"])
 
-LogServiceDep = Annotated[LogService, Depends()]
+EventServiceDep = Annotated[EventService, Depends()]
 
 
 # TODO: fix response_model
@@ -16,11 +21,11 @@ LogServiceDep = Annotated[LogService, Depends()]
 async def index(
     request: Request,
     db: SessionDep,
-    log_service: LogServiceDep,
+    event_service: EventServiceDep,
     pagination: Annotated[Pagination, Query()],
     filters: Annotated[Filters, Query()],
 ):
-    result = await log_service.get_logs(
+    result = await event_service.get_events(
         db=db, pagination=pagination, filters=filters
     )
 
@@ -44,44 +49,44 @@ async def index(
 async def get_stats(
     request: Request,
     db: SessionDep,
-    log_service: LogServiceDep,
+    event_service: EventServiceDep,
 ):
-    return await log_service.get_stats(db=db)
+    return await event_service.get_stats(db=db)
 
 
 @router.get("/trends")
 async def get_trends(
     request: Request,
     db: SessionDep,
-    log_service: LogServiceDep,
+    event_service: EventServiceDep,
 ):
-    return await log_service.get_trends(db=db)
+    return await event_service.get_trends(db=db)
 
 
 @router.get("/issues")
 async def get_issues(
     request: Request,
     db: SessionDep,
-    log_service: LogServiceDep,
+    event_service: EventServiceDep,
 ):
-    return await log_service.get_issues(db=db)
+    return await event_service.get_issues(db=db)
 
 
-@router.get("/{log_id}", response_model=LogResponse)
+@router.get("/{event_id}", response_model=EventResponse)
 async def show(
     request: Request,
     db: SessionDep,
-    log_service: LogServiceDep,
-    log_id: str,
+    event_service: EventServiceDep,
+    event_id: str,
 ):
-    return await log_service.get_log(db=db, log_id=log_id)
+    return await event_service.get_event(db=db, event_id=event_id)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def store(
     request: Request,
     db: TxSessionDep,
-    log_service: LogServiceDep,
-    log: LogCreate,
+    event_service: EventServiceDep,
+    event: EventCreate,
 ):
-    return await log_service.create_log(db=db, log_data=log)
+    return await event_service.create_event(db=db, event_data=event)

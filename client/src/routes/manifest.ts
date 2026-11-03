@@ -11,9 +11,9 @@ export const routes = {
     name: "dashboard",
     path: "/dashboard",
   },
-  logs: {
-    name: "logs.index",
-    path: "/logs",
+  events: {
+    name: "events.index",
+    path: "/events",
   },
   issues: {
     name: "issues.index",

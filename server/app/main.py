@@ -10,7 +10,7 @@ from app.core.exceptions import AppError
 from app.core.lifespan import lifespan
 from app.core.logger import configure_logging, get_logger
 from app.core.rate_limiter import limiter
-from app.modules.logs.router import router as logs_router
+from app.modules.events.router import router as events_router
 
 # from app.modules.issues.router import router as issues_router
 
@@ -49,7 +49,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(logs_router)
+    app.include_router(events_router)
     # app.include_router(issues_router)
 
     @app.get("/healthz")

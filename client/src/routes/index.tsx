@@ -85,7 +85,7 @@ const router = createBrowserRouter(
           ),
         },
         {
-          path: routes.logs.path,
+          path: routes.events.path,
           element: (
             <Suspense fallback={<LoadingFallback />}>
               <LogsExplorer />
