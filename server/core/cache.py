@@ -7,8 +7,8 @@ from fastapi import Depends, FastAPI
 from redis import RedisError
 from redis.asyncio import Redis
 
-from app.core.config import settings
-from app.core.logger import get_logger
+from core.config import settings
+from core.logger import get_logger
 
 logger = get_logger(__name__)
 

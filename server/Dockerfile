@@ -1,25 +1,40 @@
-# Set base image
-FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
+# ==========================================
+# Stage 1: Build dependencies and virtual environment
+# ==========================================
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim AS builder
 
-# Set the working directory
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+# Optimize uv settings for container builds
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-# Install curl for healthcheck
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-
-# Install dependencies
+# Install dependencies first (leveraging Docker cache layers)
 COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev --no-install-project
+
+# Copy application source code and install the project itself
+COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev
 
-# Copy application
+# ==========================================
+# Stage 2: Minimal production runtime image
+# ==========================================
+FROM python:3.12-slim-trixie
+
+WORKDIR /app
+
+# Runtime environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copy only the pre-built virtual environment from the builder stage
+COPY --from=builder /app/.venv /app/.venv
+
+# Copy the application code
 COPY . .
 
 # Run the app
-ENV PATH="/app/.venv/bin:$PATH"
-
-CMD ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "3001"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3001"]

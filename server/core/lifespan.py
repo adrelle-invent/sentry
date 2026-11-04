@@ -2,7 +2,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.core.cache import cache_lifespan
+from core.cache import cache_lifespan
 
 LIFESPAN_REGISTRY = [
     cache_lifespan,

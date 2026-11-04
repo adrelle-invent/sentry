@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy import insert
 
-from app.core.database import async_session_factory
-from app.modules.events.models import EventModel
+from core.database import async_session_factory
+from modules.events.models import EventModel
 
 
 # TODO: validate

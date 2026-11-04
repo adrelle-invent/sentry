@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 
-from app.core.config import settings
+from core.config import settings
 
 # Explicit naming convention for constraints (crucial for Alembic)
 POSTGRES_INDEXES_NAMING_CONVENTION = {

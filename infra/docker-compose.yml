@@ -2,20 +2,20 @@ networks:
   app:
 
 volumes:
-  pgsql-data:
+  # pgsql-data:
   redis-data:
 
 services:
   client:
     build:
-      context: ./client
+      context: ../client
       dockerfile: Dockerfile
     env_file:
-      - ./client/.env
+      - ../client/.env
     ports:
       - 3000:3000
     volumes:
-      - ./client:/app
+      - ../client:/app
       - /app/node_modules
     networks:
       - app
@@ -29,19 +29,19 @@ services:
 
   api:
     build:
-      context: ./server
+      context: ../server
       dockerfile: Dockerfile
     env_file:
-      - ./server/.env
+      - ../server/.env
     ports:
       - 3001:3001
     volumes:
-      - ./server:/app
+      - ../server:/app
       - /app/.venv
     networks:
       - app
     depends_on:
-      - pgsql
+      # - pgsql
       - redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/healthz"]
@@ -57,31 +57,31 @@ services:
         reservations:
           memory: 128m
 
-  pgsql:
-    image: postgres:18-trixie
-    ports:
-      - ${DB_PORT:-5432}:5432
-    environment:
-      POSTGRES_DB: ${DB_DATABASE:-postgres}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-    volumes:
-      - pgsql-data:/var/lib/postgresql
-    networks:
-      - app
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 256m
-        reservations:
-          memory: 128m
+  # pgsql:
+  #   image: postgres:18-trixie
+  #   ports:
+  #     - ${DB_PORT:-5432}:5432
+  #   environment:
+  #     POSTGRES_DB: ${DB_DATABASE:-postgres}
+  #     POSTGRES_USER: ${DB_USERNAME:-postgres}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+  #   volumes:
+  #     - pgsql-data:/var/lib/postgresql
+  #   networks:
+  #     - app
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "pg_isready", "-U", "${DB_USERNAME:-postgres}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.25"
+  #         memory: 256m
+  #       reservations:
+  #         memory: 128m
 
   redis:
     image: redis:8.6.0-alpine3.23

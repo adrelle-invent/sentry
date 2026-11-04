@@ -6,13 +6,13 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.core.exceptions import AppError
-from app.core.lifespan import lifespan
-from app.core.logger import configure_logging, get_logger
-from app.core.rate_limiter import limiter
-from app.modules.events.router import router as events_router
+from core.exceptions import AppError
+from core.lifespan import lifespan
+from core.logger import configure_logging, get_logger
+from core.rate_limiter import limiter
+from modules.events.router import router as events_router
 
-# from app.modules.issues.router import router as issues_router
+# from modules.issues.router import router as issues_router
 
 print(fastapi.__version__)
 configure_logging()

@@ -1,4 +1,4 @@
-from app.core.exceptions import AppError
+from core.exceptions import AppError
 
 
 class EventNotFoundError(AppError):

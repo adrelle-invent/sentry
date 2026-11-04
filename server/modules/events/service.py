@@ -7,12 +7,12 @@ from sqlalchemy.engine.result import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.selectable import Select
 
-from app.core.cache import CacheDep
-from app.core.database import SessionDep, TxSessionDep
-from app.core.logger import get_logger
-from app.modules.events.exceptions import EventNotFoundError
-from app.modules.events.models import EventModel
-from app.modules.events.schemas import EventCreate, Filters, Pagination
+from core.cache import CacheDep
+from core.database import SessionDep, TxSessionDep
+from core.logger import get_logger
+from modules.events.exceptions import EventNotFoundError
+from modules.events.models import EventModel
+from modules.events.schemas import EventCreate, Filters, Pagination
 
 logger = get_logger(__name__)
 

@@ -2,14 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.core.database import SessionDep, TxSessionDep
-from app.modules.events.schemas import (
+from core.database import SessionDep, TxSessionDep
+from modules.events.schemas import (
     EventCreate,
     EventResponse,
     Filters,
     Pagination,
 )
-from app.modules.events.service import EventService
+from modules.events.service import EventService
 
 router = APIRouter(prefix="/v1/events", tags=["events"])
 

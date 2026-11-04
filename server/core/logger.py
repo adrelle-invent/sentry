@@ -3,7 +3,7 @@ import sys
 
 import structlog
 
-from app.core.config import settings
+from core.config import settings
 
 
 def configure_logging() -> None:

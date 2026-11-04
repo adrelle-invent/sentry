@@ -19,9 +19,9 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.core.cache import Cache
-from app.core.database import supabase
-from app.modules.issues.schemas import IssueEvidence, IssueResponse
+from core.cache import Cache
+from core.database import supabase
+from modules.issues.schemas import IssueEvidence, IssueResponse
 
 # Define base impact & likelihood parameters for risk scoring
 RULE_DEFINITIONS = [

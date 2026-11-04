@@ -10,9 +10,9 @@
 
 # import pytest
 
-# from app.core.database import init_db
-# from app.modules.issues.schemas import IssueResponse
-# from app.modules.issues.service import IssueService
+# from core.database import init_db
+# from modules.issues.schemas import IssueResponse
+# from modules.issues.service import IssueService
 
 
 # @pytest.fixture(autouse=True, scope="function")

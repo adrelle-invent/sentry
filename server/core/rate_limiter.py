@@ -1,7 +1,7 @@
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.core.config import settings
+from core.config import settings
 
 # Initialize the limiter
 limiter = Limiter(
@@ -15,7 +15,7 @@ limiter = Limiter(
 
 # from fastapi import HTTPException, Request
 
-# from app.core.cache import Cache
+# from core.cache import Cache
 
 
 # async def _rate_limiter(request: Request, limit: int, window: int):
