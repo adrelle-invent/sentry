@@ -1,0 +1,82 @@
+# Deployment Runbook
+
+This document outlines the operational procedures, container building strategies, environment variable management, CI/CD pipeline stages, and release steps for deploying the **AD. Sentry** platform to production environments.
+
+---
+
+## 1. Overview & Release Strategy
+
+Releases for AD. Sentry follow a trunk-based development model. Merging code into the main branch triggers automated validation, container image builds, and deployment workflows.
+
+- **Environment Separation:** Staging environments automatically deploy on pushes to `main`. Production deployments require explicit version tagging (`vX.Y.Z`).
+- **Zero-Downtime Deployments:** Services must support rolling updates with health check validation to ensure no dropped requests during container replacement.
+
+---
+
+## 2. Container Building & Multi-Stage Dockerfiles
+
+To minimize image sizes and eliminate security vulnerabilities, both the frontend and backend utilize multi-stage Dockerfiles located at their respective root directories (`client/Dockerfile` and `server/Dockerfile`).
+
+### Backend Container (`server/Dockerfile`)
+
+- **Stage 1 (Builder):** Installs Python dependencies using `uv` inside a virtual environment.
+- **Stage 2 (Runtime):** Copies only the installed site-packages and application source code into a lean, non-root Python runtime container.
+
+### Frontend Container (`client/Dockerfile`)
+
+- **Stage 1 (Builder):** Installs Node modules via `pnpm` and compiles the React application using Vite into static assets.
+- **Stage 2 (Runtime):** Serves the compiled static assets using an optimized web server (or Nginx reverse proxy).
+
+---
+
+## 3. Environment Variables & Secret Management
+
+Production secrets and environment variables are injected securely at runtime via container orchestrator secrets or environment injection.
+
+- **Required Variables:**
+- `DATABASE_URL`: Async PostgreSQL connection string (`postgresql+asyncpg://...`).
+- `REDIS_URL`: Connection string for background task queues and caching.
+- `SECRET_KEY`: Cryptographic key for token signing and security hashing.
+- `ENVIRONMENT`: Set to `production`.
+
+- **Prohibition:** Never bake secrets, API keys, or private credentials into container images during the build stage.
+
+---
+
+## 4. CI/CD Pipeline Stages
+
+The automated pipeline executes the following sequential stages on every pull request and merge:
+
+1. **Lint & Static Analysis:** Runs Ruff/Flake8 for Python, ESLint/Prettier for TypeScript, and type checking (`ty` / `tsc`).
+2. **Automated Testing:** Executes pytest suite for the backend and component tests for the frontend.
+3. **Container Build & Push:** Builds multi-architecture Docker images and pushes them to the private container registry with unique commit SHA tags.
+4. **Database Migrations:** Automatically executes Alembic database upgrades (`alembic upgrade head`) as an initialization step prior to routing traffic to new backend pods.
+5. **Health Verification:** Polls liveness and readiness probes (`/health/live`, `/health/ready`) to confirm successful deployment before marking the release complete.
+
+---
+
+## 5. Release Steps & Rollback Procedures
+
+### Executing a Release
+
+1. Tag the release commit:
+
+```bash
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
+2. Monitor pipeline execution and health probe status in the deployment dashboard.
+
+### Emergency Rollback Procedure
+
+If a critical defect slips into production:
+
+1. Identify the last stable container image tag.
+2. Trigger an immediate rollback deployment pointing to the stable image hash:
+
+```bash
+docker service update --image registry.adrelle.com/server:v0.9.9 server-service
+```
+
+3. If database schema changes are backward-incompatible, execute the corresponding downward Alembic migration (`alembic downgrade -1`) after halting traffic to the new service version.
