@@ -1,4 +1,3 @@
-import fastapi
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -14,7 +13,6 @@ from modules.events.router import router as events_router
 
 # from modules.issues.router import router as issues_router
 
-print(fastapi.__version__)
 configure_logging()
 logger = get_logger(__name__)
 
