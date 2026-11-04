@@ -140,21 +140,21 @@ export const api = {
     if (service) params.append("service", service);
     if (level) params.append("level", level);
     const queryString = params.toString() ? `?${params.toString()}` : "";
-    return fetchApi<PaginatedLogs>(`/logs${queryString}`);
+    return fetchApi<PaginatedLogs>(`/events${queryString}`);
   },
 
   getLog: (id: string): Promise<Log> => {
     if (isDemoMode) {
       return getDummyLog(id);
     }
-    return fetchApi<Log>(`/logs/${id}`);
+    return fetchApi<Log>(`/events/${id}`);
   },
 
   createLog: (log: Omit<Log, "id" | "created_at">): Promise<Log> => {
     if (isDemoMode) {
       return createDummyLog(log);
     }
-    return fetchApi<Log>("/logs", {
+    return fetchApi<Log>("/events", {
       method: "POST",
       body: JSON.stringify(log),
     });
@@ -164,7 +164,7 @@ export const api = {
     if (isDemoMode) {
       return deleteDummyLog(id);
     }
-    return fetchApi<{ status: string }>(`/logs/${id}`, {
+    return fetchApi<{ status: string }>(`/events/${id}`, {
       method: "DELETE",
     });
   },
@@ -173,21 +173,21 @@ export const api = {
     if (isDemoMode) {
       return getDummyStats();
     }
-    return fetchApi<Stats>("/logs/stats");
+    return fetchApi<Stats>("/events/stats");
   },
 
   getTrends: (): Promise<TrendPoint[]> => {
     if (isDemoMode) {
       return getDummyTrends();
     }
-    return fetchApi<TrendPoint[]>("/logs/trends");
+    return fetchApi<TrendPoint[]>("/events/trends");
   },
 
   getIssues: (): Promise<Issue[]> => {
     if (isDemoMode) {
       return getDummyIssues();
     }
-    return fetchApi<Issue[]>("/logs/issues");
+    return fetchApi<Issue[]>("/events/issues");
   },
 
   getAuditIssues: (filters?: { id?: string; severity?: string; category?: string; endpoint?: string }): Promise<AuditIssue[]> => {
@@ -226,14 +226,14 @@ export const api = {
     if (isDemoMode) {
       return getDummyAlerts();
     }
-    return fetchApi<Alert[]>("/logs/alerts");
+    return fetchApi<Alert[]>("/events/alerts");
   },
 
   getReports: (): Promise<Report[]> => {
     if (isDemoMode) {
       return getDummyReports();
     }
-    return fetchApi<Report[]>("/logs/reports");
+    return fetchApi<Report[]>("/events/reports");
   },
 };
 
