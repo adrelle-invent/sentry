@@ -33,6 +33,9 @@ migrate:
 migration-create:
 	cd server && .venv/bin/alembic revision --autogenerate -m "$(msg)"
 
+migration-rollback:
+	cd server && .venv/bin/alembic downgrade -1
+
 server-dev:
 	cd server && .venv/bin/fastapi dev
 

@@ -5,10 +5,14 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import modules.telemetry.models.access_key
+import modules.telemetry.models.event
+import modules.telemetry.models.issue
+import modules.telemetry.models.service
+import modules.tenancy.models  # noqa: F401
 from alembic import context
 from core.config import settings
 from core.database import Base
-from modules.events.models import EventModel  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
