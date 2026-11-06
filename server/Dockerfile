@@ -37,4 +37,4 @@ COPY --from=builder /app/.venv /app/.venv
 COPY . .
 
 # Run the app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3001"]
+CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "3001"]
