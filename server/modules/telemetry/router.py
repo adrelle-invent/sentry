@@ -3,13 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 
 from core.database import SessionDep, TxSessionDep
-from modules.events.schemas import (
+from modules.telemetry.schemas import (
     EventCreate,
     EventResponse,
     Filters,
     Pagination,
 )
-from modules.events.service import EventService
+from modules.telemetry.services.event_service import EventService
 
 router = APIRouter(prefix="/v1/events", tags=["events"])
 
@@ -43,34 +43,6 @@ async def index(
         "next": cursor_url(next_offset),
         "prev": cursor_url(prev_offset),
     }
-
-
-@router.get("/stats")
-async def get_stats(
-    request: Request,
-    db: SessionDep,
-    event_service: EventServiceDep,
-):
-    return await event_service.get_stats(db=db)
-
-
-@router.get("/trends")
-async def get_trends(
-    request: Request,
-    db: SessionDep,
-    event_service: EventServiceDep,
-):
-    return await event_service.get_trends(db=db)
-
-
-@router.get("/issues")
-async def get_issues(
-    request: Request,
-    db: SessionDep,
-    event_service: EventServiceDep,
-):
-    return await event_service.get_issues(db=db)
-
 
 @router.get("/{event_id}", response_model=EventResponse)
 async def show(

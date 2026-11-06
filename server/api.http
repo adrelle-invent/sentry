@@ -9,19 +9,29 @@ GET {{baseUrl}}/healthz
 
 ### Create log
 # @name createLog
-POST {{baseUrl}}/v1/logs
+POST {{baseUrl}}/v1/events
 Content-Type: application/json
 
 {
-  "service": "payment-api",
-  "environment": "production",
-  "level": "INFO",
-  "log_message": "Payment processed successfully.",
-  "trace_id": "trc_c12e9f45",
-  "metadata": {
-    "transaction_id": "txn_784512",
-    "amount": 99.99,
-    "currency": "USD"
+  "service_id": "srv_99a87fbc1234",
+  "timestamp": "2026-11-02T11:04:00Z",
+  "level": "ERROR",
+  "message": "Database connection timed out while processing transaction",
+  "trace_id": "trc_abc123456789",
+  "span_id": "spn_7890xyz",
+  "exception": {
+    "type": "DatabaseTimeoutError",
+    "stack_trace": [
+      {"file": "app/services/db.py", "line": 42, "function": "connect"},
+      {"file": "app/routers/checkout.py", "line": 118, "function": "process_payment"}
+    ]
+  },
+  "attributes": {
+    "user_id": "usr_84920",
+    "environment": "production",
+    "region": "us-east-1",
+    "http_method": "POST",
+    "http_endpoint": "/api/v1/checkout"
   }
 }
 

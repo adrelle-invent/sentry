@@ -9,7 +9,7 @@ from core.exceptions import AppError
 from core.lifespan import lifespan
 from core.logger import configure_logging, get_logger
 from core.rate_limiter import limiter
-from modules.events.router import router as events_router
+from modules.telemetry.router import router as events_router
 
 # from modules.issues.router import router as issues_router
 
