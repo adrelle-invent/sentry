@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help up down logs ps migrate migration-create server-dev client-dev test-server test-client
+.PHONY: help up down logs ps migrate migration-create server-dev client-dev test-server test-client export-openapi generate-types types
 
 help:
 	@echo "AD. Sentry Makefile Commands:"
@@ -14,6 +14,9 @@ help:
 	@echo "  make client-dev      - Run Vite React frontend development server"
 	@echo "  make test-server     - Run backend pytest suite"
 	@echo "  make test-client     - Run frontend test suite"
+	@echo "  make export-openapi  - Export OpenAPI spec to client/openapi.json"
+	@echo "  make generate-types  - Generate TypeScript definitions from client/openapi.json"
+	@echo "  make types           - Export OpenAPI spec and generate TypeScript definitions"
 
 up:
 	docker compose -f infra/docker-compose.yml --env-file ./server/.env up -d 
@@ -30,7 +33,7 @@ ps:
 migrate:
 	cd server && .venv/bin/alembic upgrade head
 
-migration-create:
+migrationcreate:
 	cd server && .venv/bin/alembic revision --autogenerate -m "$(msg)"
 
 migration-rollback:
@@ -47,3 +50,11 @@ test-server:
 
 test-client:
 	cd client && pnpm test --run
+
+export-openapi:
+	cd server && uv run python scripts/export_openapi.py
+
+generate-types:
+	cd client && pnpm generate-types
+
+types: export-openapi generate-types
