@@ -33,10 +33,10 @@ ps:
 migrate:
 	cd server && .venv/bin/alembic upgrade head
 
-migrationcreate:
+migration-create:
 	cd server && .venv/bin/alembic revision --autogenerate -m "$(msg)"
 
-migration-rollback:
+migrate-rollback:
 	cd server && .venv/bin/alembic downgrade -1
 
 server-dev:

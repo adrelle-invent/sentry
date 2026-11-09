@@ -1,0 +1,18 @@
+# @baseUrl = https://localhost/api
+# Alternative direct URL (bypassing Nginx):
+@baseUrl = http://localhost:3001
+
+
+### Create Workspace
+POST {{baseUrl}}/v1/auth/workspace
+Content-Type: application/json
+
+{
+    "name": "ADrelle"
+}
+
+
+
+// create tenant w/ user
+// create service <- tenant_id
+// create access_key <- tenant_id, service_id

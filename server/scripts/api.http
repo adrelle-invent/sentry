@@ -3,6 +3,8 @@
 @baseUrl = http://localhost:3001
 
 @logId = a8c2c449-d33a-460f-ba7e-330e52222420
+@serviceId = 
+@accessKey = 
 
 ### Health Check
 GET {{baseUrl}}/healthz
@@ -13,7 +15,7 @@ POST {{baseUrl}}/v1/events
 Content-Type: application/json
 
 {
-  "service_id": "srv_99a87fbc1234",
+  "service_id": "svc_sentry_api",
   "timestamp": "2026-11-02T11:04:00Z",
   "level": "ERROR",
   "message": "Database connection timed out while processing transaction",

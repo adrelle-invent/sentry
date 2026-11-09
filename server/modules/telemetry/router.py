@@ -7,6 +7,7 @@ from modules.telemetry.schemas import (
     EventCreate,
     EventResponse,
     Filters,
+    PaginatedResponse,
     Pagination,
 )
 from modules.telemetry.services.event_service import EventService
@@ -16,8 +17,7 @@ router = APIRouter(prefix="/v1/events", tags=["events"])
 EventServiceDep = Annotated[EventService, Depends()]
 
 
-# TODO: fix response_model
-@router.get("")
+@router.get("", response_model=PaginatedResponse[EventResponse])
 async def index(
     request: Request,
     db: SessionDep,

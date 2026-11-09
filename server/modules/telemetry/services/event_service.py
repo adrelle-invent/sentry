@@ -48,7 +48,7 @@ class EventService:
             total = total_result.scalar_one()
 
             return {
-                "data": [event.to_dict() for event in result.scalars().all()],
+                "data": result.scalars().all(),
                 "limit": pagination.limit,
                 "offset": pagination.offset,
                 "total": total,
@@ -73,7 +73,7 @@ class EventService:
                 await self.cache.set(not_found_key, "1", expire_seconds=30)
                 raise EventNotFoundError(f"Event with id {event_id} not found")
 
-            return event.to_dict()
+            return event
 
         return await self.cache.get_or_set_with_lock(
             f"event:{event_id}",
