@@ -12,7 +12,7 @@ from modules.telemetry.schemas import (
 )
 from modules.telemetry.services.event_service import EventService
 
-router = APIRouter(prefix="/v1/events", tags=["events"])
+router = APIRouter(prefix="/events")
 
 EventServiceDep = Annotated[EventService, Depends()]
 

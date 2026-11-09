@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, SecretStr, computed_field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,12 +10,19 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=True,
+        env_ignore_empty=True,
     )
 
     # Application
     APP_NAME: str = "AD. Sentry"
-    APP_ENV: Literal["development", "staging", "production"] = "development"
+    APP_ENV: Literal["local", "staging", "production"] = "local"
     DEBUG: bool = False
+
+    # CORS - Parsed safely as a list
+    ALLOWED_ORIGINS: list[str] = Field(
+        default=["http://localhost:3000"],
+        description="Comma-separated or JSON list of allowed CORS origins"
+    )
 
     # Redis
     REDIS_HOST: str = "redis"
@@ -29,15 +36,13 @@ class Settings(BaseSettings):
     DB_USERNAME: str
     DB_PASSWORD: SecretStr
 
-    DB_ECHO_LOG: bool = False
-
-    @computed_field
     @property
     def database_url(self) -> str:
-        """Derives the async database URL securely, safely unmasking the password."""
+        """Derives the async database URL securely without exposing plaintext in serialization."""
         return (
             f"{self.DB_CONNECTION}://{self.DB_USERNAME}:{self.DB_PASSWORD.get_secret_value()}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_DATABASE}"
         )
+
 
 settings = Settings()
