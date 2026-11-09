@@ -18,12 +18,12 @@ class Settings(BaseSettings):
     APP_ENV: Literal["local", "staging", "production"] = "local"
     DEBUG: bool = False
 
-    # CORS - Parsed safely as a list
-    ALLOWED_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000"],
-        description="Comma-separated or JSON list of allowed CORS origins"
-    )
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
 
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        
     # Redis
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = Field(default=6379, ge=1, le=65535)
