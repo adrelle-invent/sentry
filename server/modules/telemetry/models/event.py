@@ -1,4 +1,3 @@
-import enum
 import uuid
 from datetime import datetime
 from typing import Any
@@ -8,14 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
-
-
-class EventLevel(enum.StrEnum):
-    debug = "debug"
-    info = "info"
-    warn = "warn"
-    error = "error"
-    fatal = "fatal"
+from modules.telemetry.enums import EventLevel
 
 
 class Event(Base):

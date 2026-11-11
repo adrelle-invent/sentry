@@ -1,4 +1,3 @@
-import enum
 import uuid
 from datetime import datetime
 
@@ -15,12 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
-
-
-class UserRole(enum.StrEnum):
-    owner = "owner"
-    admin = "admin"
-    member = "member"
+from modules.tenancy.enums import UserRole
 
 
 class User(Base):

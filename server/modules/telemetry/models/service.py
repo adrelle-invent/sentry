@@ -1,4 +1,3 @@
-import enum
 import uuid
 from datetime import datetime
 
@@ -7,18 +6,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
+from modules.telemetry.enums import ServiceEnvironment, ServiceStatus
 from modules.tenancy.models import Workspace
-
-
-class ServiceEnvironment(enum.StrEnum):
-    development = "development"
-    staging = "staging"
-    production = "production"
-
-
-class ServiceStatus(enum.StrEnum):
-    active = "active"
-    inactive = "inactive"
 
 
 class Service(Base):
