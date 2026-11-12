@@ -50,5 +50,9 @@ jobs:
           uv sync --locked
 
       - name: Run backend tests
+        env:
+          DB_DATABASE: test_db
+          DB_USERNAME: test_user
+          DB_PASSWORD: test_password
         run: |
           uv run pytest
