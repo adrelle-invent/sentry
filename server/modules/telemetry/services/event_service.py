@@ -4,12 +4,13 @@ from sqlalchemy.engine.result import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.selectable import Select
 
+from common.pagination import PaginationParams
 from core.cache import CacheDep
 from core.database import SessionDep, TxSessionDep
 from core.logger import get_logger
 from modules.telemetry.exceptions import EventNotFoundError
 from modules.telemetry.models.event import Event
-from modules.telemetry.schemas import EventCreate, Filters, Pagination
+from modules.telemetry.schemas.event import EventCreate, EventFilterParams
 
 logger = get_logger(__name__)
 
@@ -20,23 +21,23 @@ class EventService:
 
     # TODO: fix return type
     async def get_events(
-        self, db: AsyncSession, filters: Filters, pagination: Pagination
+        self, db: AsyncSession, filters: EventFilterParams, pagination: PaginationParams
     ) -> dict:
         async def _fetch_from_db():
             query: Select[tuple[Event]] = (
                 select(Event)
                 .order_by(Event.created_at.desc())
-                .limit(pagination.limit)
-                .offset(pagination.offset)
+                .limit(pagination.size)
+                .offset(pagination.page)
             )
 
             count_query = select(func.count()).select_from(Event)
 
-            if filters.service:
-                query = query.where(Event.service_id == filters.service)
-                count_query = count_query.where(
-                    Event.service_id == filters.service
-                )
+            # if filters.service:
+            #     query = query.where(Event.service_id == filters.service)
+            #     count_query = count_query.where(
+            #         Event.service_id == filters.service
+            #     )
 
             if filters.level:
                 query = query.where(Event.level == filters.level)
@@ -48,14 +49,14 @@ class EventService:
             total = total_result.scalar_one()
 
             return {
-                "data": result.scalars().all(),
-                "limit": pagination.limit,
-                "offset": pagination.offset,
+                "items": result.scalars().all(),
+                "page": pagination.size,
+                "size": pagination.page,
                 "total": total,
             }
 
         return await self.cache.get_or_set_with_lock(
-            f"events:service:{filters.service}:level:{filters.level}:limit:{pagination.limit}:offset:{pagination.offset}",
+            f"events:service::level:{filters.level}:size:{pagination.size}:page:{pagination.page}",
             _fetch_from_db,
         )
 

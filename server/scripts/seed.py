@@ -5,9 +5,9 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from common.str.slugify import slugify
 from core.database import async_session_factory
 from core.logger import get_logger
-from core.utils import slugify
 from modules.telemetry.models.access_key import AccessKey
 from modules.telemetry.models.service import (
     Service,
