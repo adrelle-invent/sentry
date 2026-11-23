@@ -12,25 +12,22 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.database import Base
+from common.base_model import Base, UUIDMixin
 
 
-class AccessKey(Base):
+class AccessKey(Base, UUIDMixin):
     __tablename__ = "access_keys"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=func.uuid_generate_v4(),
-    )
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
-        ForeignKey("workspaces.id", ondelete="CASCADE"), 
+        UUID(as_uuid=True),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    key_prefix: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    key_prefix: Mapped[str] = mapped_column(
+        String(16), nullable=False, index=True
+    )
     key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     allowed_services: Mapped[dict[str, str]] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
@@ -45,5 +42,7 @@ class AccessKey(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
     )

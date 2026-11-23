@@ -11,28 +11,16 @@ from sqlalchemy import (
     String,
     Text,
     func,
-    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.database import Base
+from common.base_model import Base, TenantMixin, TimestampMixin, UUIDMixin
 
 
-class Issue(Base):
+class Issue(Base, UUIDMixin, TimestampMixin, TenantMixin):
     __tablename__ = "issues"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("gen_random_uuid()"),
-    )
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("workspaces.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
     service_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("services.id", ondelete="CASCADE"),
@@ -76,14 +64,4 @@ class Issue(Base):
     embedding: Mapped[list[float] | None] = mapped_column(
         Vector(dim=1536),
         nullable=True,
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
     )

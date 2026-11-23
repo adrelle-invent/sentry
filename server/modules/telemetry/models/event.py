@@ -6,24 +6,13 @@ from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.database import Base
+from common.base_model import Base, TenantMixin, UUIDMixin
 from modules.telemetry.enums import EventLevel
 
 
-class Event(Base):
+class Event(Base, UUIDMixin, TenantMixin):
     __tablename__ = "events"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=func.uuid_generate_v4(),
-    )
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("workspaces.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
     service_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("services.id", ondelete="CASCADE"),
@@ -52,5 +41,4 @@ class Event(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        index=True,
     )
