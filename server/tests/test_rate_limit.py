@@ -141,4 +141,4 @@ async def test_health_not_rate_limited(client: AsyncClient):
         assert response.status_code == 200, (
             f"Health check failed on request {i}: {response.text}"
         )
-        assert response.json() == {"status": "ok"}
+        assert response.json() == {"status": "healthy"}

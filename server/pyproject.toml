@@ -16,6 +16,8 @@ dependencies = [
     "reportlab>=4.4.0",
     "slowapi>=0.1.10",
     "pgvector>=0.5.1",
+    "pwdlib[argon2,bcrypt]>=0.4.0",
+    "pyjwt>=2.15.1",
 ]
 
 [dependency-groups]

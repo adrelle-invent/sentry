@@ -15,15 +15,21 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "AD. Sentry"
+    APP_VERSION: str = "0.1.0"
     APP_ENV: Literal["local", "staging", "production"] = "local"
-    DEBUG: bool = False
+    APP_DEBUG: bool = True
+    APP_KEY: SecretStr
+    
+    APP_HOST: str = "localhost"
+    APP_PORT: int = 8000
+
 
     ALLOWED_ORIGINS: str = "http://localhost:3000"
 
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
-        
+
     # Redis
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = Field(default=6379, ge=1, le=65535)
@@ -43,6 +49,10 @@ class Settings(BaseSettings):
             f"{self.DB_CONNECTION}://{self.DB_USERNAME}:{self.DB_PASSWORD.get_secret_value()}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_DATABASE}"
         )
+
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440, ge=1)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, ge=1)
+    JWT_ALGORITHM: str = "HS256"
 
 
 settings = Settings()
