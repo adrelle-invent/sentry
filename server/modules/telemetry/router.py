@@ -2,13 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
+from common.pagination import PaginationParams
 from core.database import SessionDep, TxSessionDep
-from modules.telemetry.schemas import (
+from modules.telemetry.schemas.event import (
     EventCreate,
+    EventFilterParams,
     EventResponse,
-    Filters,
-    PaginatedResponse,
-    Pagination,
+    PaginatedEventsResponse,
 )
 from modules.telemetry.services.event_service import EventService
 
@@ -16,14 +16,13 @@ router = APIRouter(prefix="/events")
 
 EventServiceDep = Annotated[EventService, Depends()]
 
-
-@router.get("", response_model=PaginatedResponse[EventResponse])
+@router.get("", response_model=PaginatedEventsResponse[EventResponse])
 async def index(
     request: Request,
     db: SessionDep,
     event_service: EventServiceDep,
-    pagination: Annotated[Pagination, Query()],
-    filters: Annotated[Filters, Query()],
+    pagination: Annotated[PaginationParams, Query()],
+    filters: Annotated[EventFilterParams, Query()],
 ):
     result = await event_service.get_events(
         db=db, pagination=pagination, filters=filters
