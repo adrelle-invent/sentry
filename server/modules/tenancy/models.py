@@ -4,7 +4,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from common.base_model import Base, TimestampMixin, UUIDMixin
-from modules.users.models import User
 
 
 class Workspace(Base, UUIDMixin, TimestampMixin):
@@ -14,7 +13,7 @@ class Workspace(Base, UUIDMixin, TimestampMixin):
         String(36), nullable=False, unique=True, index=True
     )
 
-    users: Mapped[list[User]] = relationship(
+    users: Mapped[list["User"]] = relationship(
         back_populates="workspace", cascade="all, delete-orphan"
     )
     services: Mapped[list["Service"]] = relationship(  # noqa: F821 # type: ignore
