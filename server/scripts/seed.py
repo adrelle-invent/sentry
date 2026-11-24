@@ -15,7 +15,8 @@ from modules.telemetry.models.service import (
     ServiceStatus,
 )
 from modules.telemetry.services.access_key_service import generate_access_key
-from modules.tenancy.models import User, UserRole, Workspace
+from modules.tenancy.models import Workspace
+from modules.users.models import User, UserRole
 
 logger = get_logger(__name__)
 
@@ -87,7 +88,9 @@ async def _seed_workspace(db: AsyncSession) -> None:
         )
         db.add(user)
         await db.flush()
-        logger.info("seed_user_created", email=SEED_USER_EMAIL, role=UserRole.owner)
+        logger.info(
+            "seed_user_created", email=SEED_USER_EMAIL, role=UserRole.owner
+        )
     else:
         logger.info("seed_user_exists", email=SEED_USER_EMAIL)
 
@@ -133,9 +136,7 @@ async def _seed_workspace(db: AsyncSession) -> None:
             name=SEED_ACCESS_KEY_NAME,
             key_prefix=prefix,
             key_hash=key_hash,
-            allowed_services={
-                str(service.id): True
-            },
+            allowed_services={str(service.id): True},
             is_active=True,
         )
         db.add(access_key)
