@@ -9,10 +9,11 @@ import modules.telemetry.models.access_key
 import modules.telemetry.models.event
 import modules.telemetry.models.issue
 import modules.telemetry.models.service
-import modules.tenancy.models  # noqa: F401
+import modules.tenancy.models
+import modules.users.models  # noqa: F401
 from alembic import context
+from common.base_model import Base
 from core.config import settings
-from core.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
