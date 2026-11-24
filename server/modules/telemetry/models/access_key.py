@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
+    UUID,
     Boolean,
     DateTime,
     ForeignKey,
@@ -9,7 +11,6 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from common.base_model import Base, UUIDMixin
@@ -30,7 +31,7 @@ class AccessKey(Base, UUIDMixin):
     )
     key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     allowed_services: Mapped[dict[str, str]] = mapped_column(
-        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+        JSON, nullable=False, server_default=text("'{}'")
     )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, index=True

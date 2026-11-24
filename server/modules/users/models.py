@@ -12,12 +12,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from common.base_model import Base, TenantMixin, TimestampMixin, UUIDMixin
+from common.base_model import Base, TenancyMixin, TimestampMixin, UUIDMixin
 from modules.tenancy.models import Workspace
 from modules.users.enums import UserRole
 
 
-class User(Base, UUIDMixin, TenantMixin, TimestampMixin):
+class User(Base, UUIDMixin, TenancyMixin, TimestampMixin):
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(

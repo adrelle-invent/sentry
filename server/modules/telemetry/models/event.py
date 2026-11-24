@@ -2,15 +2,24 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, func, text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import (
+    JSON,
+    UUID,
+    DateTime,
+    Enum,
+    ForeignKey,
+    String,
+    Text,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
-from common.base_model import Base, TenantMixin, UUIDMixin
+from common.base_model import Base, TenancyMixin, UUIDMixin
 from modules.telemetry.enums import EventLevel
 
 
-class Event(Base, UUIDMixin, TenantMixin):
+class Event(Base, UUIDMixin, TenancyMixin):
     __tablename__ = "events"
 
     service_id: Mapped[uuid.UUID] = mapped_column(
@@ -35,7 +44,7 @@ class Event(Base, UUIDMixin, TenantMixin):
     )
     message: Mapped[str] = mapped_column(Text, nullable=False)
     attributes: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+        JSON, nullable=False, server_default=text("'{}'")
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

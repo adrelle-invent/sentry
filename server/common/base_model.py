@@ -51,7 +51,7 @@ class TimestampMixin:
         server_default=func.now(),
     )
 
-class TenantMixin:
+class TenancyMixin:
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("workspaces.id", ondelete="CASCADE"),

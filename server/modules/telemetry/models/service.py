@@ -1,29 +1,15 @@
-import uuid
-from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base
+from common.base_model import Base, TenancyMixin, TimestampMixin, UUIDMixin
 from modules.telemetry.enums import ServiceEnvironment, ServiceStatus
 from modules.tenancy.models import Workspace
 
 
-class Service(Base):
+class Service(Base, UUIDMixin, TimestampMixin, TenancyMixin):
     __tablename__ = "services"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=func.uuid_generate_v4(),
-    )
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("workspaces.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
     slug: Mapped[str] = mapped_column(
         String(36), unique=True, nullable=False, index=True
     )
@@ -36,15 +22,6 @@ class Service(Base):
     status: Mapped[ServiceStatus] = mapped_column(
         Enum(ServiceStatus, name="service_status", native_enum=True),
         nullable=False,
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
     workspace: Mapped[Workspace] = relationship(back_populates="services")
