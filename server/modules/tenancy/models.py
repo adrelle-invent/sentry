@@ -13,9 +13,13 @@ class Workspace(Base, UUIDMixin, TimestampMixin):
         String(36), nullable=False, unique=True, index=True
     )
 
-    users: Mapped[list["User"]] = relationship(
+    users: Mapped[list["User"]] = relationship(  # noqa: F821 # type: ignore
         back_populates="workspace", cascade="all, delete-orphan"
     )
     services: Mapped[list["Service"]] = relationship(  # noqa: F821 # type: ignore
+        back_populates="workspace", cascade="all, delete-orphan"
+    )
+
+    events: Mapped[list["Event"]] = relationship(  # noqa: F821 # type: ignore
         back_populates="workspace", cascade="all, delete-orphan"
     )

@@ -13,7 +13,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from common.base_model import Base, TenancyMixin, TimestampMixin, UUIDMixin
 
@@ -64,4 +64,9 @@ class Issue(Base, UUIDMixin, TimestampMixin, TenancyMixin):
     embedding: Mapped[list[float] | None] = mapped_column(
         Vector(dim=1536),
         nullable=True,
+    )
+
+    events: Mapped[list["Event"]] = relationship(
+        back_populates="issue",
+        cascade="all, delete-orphan",
     )

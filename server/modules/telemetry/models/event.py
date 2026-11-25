@@ -13,10 +13,12 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from common.base_model import Base, TenancyMixin, UUIDMixin
 from modules.telemetry.enums import EventLevel
+from modules.telemetry.models.issue import Issue
+from modules.tenancy.models import Workspace
 
 
 class Event(Base, UUIDMixin, TenancyMixin):
@@ -51,3 +53,6 @@ class Event(Base, UUIDMixin, TenancyMixin):
         nullable=False,
         server_default=func.now(),
     )
+
+    issue: Mapped[Issue] = relationship(back_populates="events")
+    workspace: Mapped[Workspace] = relationship(back_populates="events")
