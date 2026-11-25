@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 
+import models  # noqa: F401
 from core.config import settings
 from core.exceptions import register_exception_handlers
 from core.lifespan import lifespan
