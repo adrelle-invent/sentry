@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import uuid
 from datetime import UTC, datetime
@@ -5,6 +6,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import models  # noqa: F401
 from common.str.slugify import slugify
 from core.database import async_session_factory
 from core.logger import get_logger
@@ -148,3 +150,7 @@ async def _seed_workspace(db: AsyncSession) -> None:
         )
     else:
         logger.info("seed_access_key_exists", name=SEED_ACCESS_KEY_NAME)
+
+
+if __name__ == "__main__":
+    asyncio.run(run_seed())
