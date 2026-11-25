@@ -2,8 +2,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
-from common.pagination import PaginationParams
-from core.database import SessionDep, TxSessionDep
+from common.pagination import PaginationParams, build_pagination_meta
+from core.database import SessionDep
 from modules.telemetry.schemas.event import (
     EventCreate,
     EventFilterParams,
@@ -15,6 +15,7 @@ from modules.telemetry.services.event_service import EventService
 router = APIRouter(prefix="/events")
 
 EventServiceDep = Annotated[EventService, Depends()]
+
 
 @router.get("", response_model=PaginatedEventsResponse[EventResponse])
 async def index(
@@ -28,20 +29,15 @@ async def index(
         db=db, pagination=pagination, filters=filters
     )
 
-    offset, limit, total = result["offset"], result["limit"], result["total"]
-    next_offset = offset + limit if offset + limit < total else None
-    prev_offset = max(0, offset - limit) if offset > 0 else None
+    meta = build_pagination_meta(
+        page=result["page"],
+        size=result["size"],
+        total=result["total"],
+        url=request.url,
+    )
 
-    def cursor_url(new_offset: int | None) -> str | None:
-        if new_offset is None:
-            return None
-        return str(request.url.include_query_params(offset=new_offset))
+    return {**result, **meta}
 
-    return {
-        **result,
-        "next": cursor_url(next_offset),
-        "prev": cursor_url(prev_offset),
-    }
 
 @router.get("/{event_id}", response_model=EventResponse)
 async def show(
@@ -56,7 +52,7 @@ async def show(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def store(
     request: Request,
-    db: TxSessionDep,
+    db: SessionDep,
     event_service: EventServiceDep,
     event: EventCreate,
 ):

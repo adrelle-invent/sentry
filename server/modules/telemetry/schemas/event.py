@@ -30,7 +30,7 @@ class EventResponse(EventBase):
 
 
 class PaginatedEventsResponse(PaginatedResponse):
-    data: list[EventResponse]
+    items: list[EventResponse]
 
 class EventFilterParams(BaseModel):
     service_id: UUID | None = None
