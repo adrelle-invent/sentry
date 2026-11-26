@@ -1,9 +1,10 @@
 import json
 from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeVar
 
 from fastapi import Depends, FastAPI
+from fastapi.encoders import jsonable_encoder
 from redis import RedisError
 from redis.asyncio import Redis
 
@@ -11,6 +12,8 @@ from core.config import settings
 from core.logger import get_logger
 
 logger = get_logger(__name__)
+
+T = TypeVar("T")
 
 redis = Redis(
     host=settings.REDIS_HOST,
@@ -46,74 +49,75 @@ class Cache:
     def __init__(self, client: Redis):
         self.client = client
 
+    def _serialize_value(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        if hasattr(value, "model_dump_json"):
+            return value.model_dump_json()
+        return json.dumps(jsonable_encoder(value))
+
+    def _deserialize_value(self, raw: str | bytes | None) -> Any:
+        if raw is None:
+            return None
+        text = raw.decode() if isinstance(raw, bytes) else raw
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return text
+
     async def set(self, key: str, value: Any, expire_seconds: int = 60) -> None:
         try:
-            # Serialize dictionaries, lists, or pydantic models into a string format for Redis
-            if isinstance(value, (dict, list)):
-                serialized = json.dumps(value)
-            elif hasattr(value, "model_dump_json"):  # Pydantic v2
-                serialized = value.model_dump_json()
-            elif hasattr(value, "dict"):  # Pydantic v1 fallback
-                serialized = json.dumps(value.dict())
-            else:
-                serialized = str(value)
-
+            serialized = self._serialize_value(value)
             await self.client.set(key, serialized, ex=expire_seconds)
         except Exception as e:
-            logger.warning(f"Cache write error: {e}")
+            logger.warning("Cache write error for key=%s: %s", key, e)
 
-    async def get(self, key: str) -> Any | None:
+    async def get(self, key: str) -> Any:
         try:
             data = await self.client.get(key)
-            if not data:
+            if data is None:
                 return None
-
-            decoded = data.decode("utf-8") if isinstance(data, bytes) else data
-
-            try:
-                return json.loads(decoded)
-            except (json.JSONDecodeError, TypeError):
-                return decoded
-
+            return self._deserialize_value(data)
         except Exception as e:
-            logger.warning(f"Cache read error: {e}")
+            logger.warning("Cache read error for key=%s: %s", key, e)
             return None
 
     async def has(self, key: str) -> bool:
         try:
             return bool(await self.client.exists(key))
         except Exception as e:
-            logger.warning(f"Cache check error: {e}")
+            logger.warning("Cache check error for key=%s: %s", key, e)
             return False
 
     async def forget(self, key: str) -> None:
         try:
             await self.client.delete(key)
         except Exception as e:
-            logger.warning(f"Cache delete error: {e}")
+            logger.warning("Cache delete error for key=%s: %s", key, e)
 
     async def incr(self, key: str) -> int | None:
         try:
             return await self.client.incr(key)  # type: ignore
         except Exception as e:
-            logger.warning(f"Cache incr error: {e}")
+            logger.warning("Cache incr error for key=%s: %s", key, e)
             return None
 
     async def expire(self, key: str, ttl: int) -> bool:
         try:
             return bool(await self.client.expire(key, ttl))
         except Exception as e:
-            logger.warning(f"Cache expire error: {e}")
+            logger.warning("Cache expire error for key=%s: %s", key, e)
             return False
+
 
     async def get_or_set_with_lock(
         self,
         key: str,
-        fetch_func: Callable[[], Awaitable[Any]],
+        fetch_func: Callable[[], Awaitable[T]],
         expire_seconds: int = 60,
         lock_timeout: float = 5.0,
         blocking_timeout: float = 2.0,
-    ) -> Any:
+    ) -> T:
         """
         Implements cache-aside with a distributed lock to prevent cache stampedes.
         """
