@@ -56,6 +56,29 @@ services:
           memory: 256m
         reservations:
           memory: 128m
+  events_consumer:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    command: python -m modules.telemetry.worker
+    env_file:
+      - ../server/.env
+    environment:
+      CONSUMER_NAME: worker-1
+    volumes:
+      - ../server:/app
+      - /app/.venv
+    networks:
+      - app
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256m
+        reservations:
+          memory: 128m
 
   # pgsql:
   #   image: postgres:18-trixie

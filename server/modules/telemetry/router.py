@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
@@ -44,16 +45,15 @@ async def show(
     request: Request,
     db: SessionDep,
     event_service: EventServiceDep,
-    event_id: str,
+    event_id: UUID,
 ):
     return await event_service.get_event(db=db, event_id=event_id)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_202_ACCEPTED)
 async def store(
     request: Request,
-    db: SessionDep,
     event_service: EventServiceDep,
     event: EventCreate,
 ):
-    return await event_service.create_event(db=db, event_data=event)
+    return await event_service.create_event(event_data=event)

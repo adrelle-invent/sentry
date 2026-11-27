@@ -1,5 +1,6 @@
+from uuid import UUID
+
 from sqlalchemy import func, select
-from sqlalchemy.engine.result import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.selectable import Select
 
@@ -49,7 +50,7 @@ class EventService:
                 query = query.where(Event.level == filters.level)
                 count_query = count_query.where(Event.level == filters.level)
 
-            result: Result[tuple[Event]] = await db.execute(query)
+            result = await db.execute(query)
 
             total_result = await db.execute(count_query)
             total = total_result.scalar_one()
@@ -66,13 +67,13 @@ class EventService:
             _fetch_from_db,
         )
 
-    async def get_event(self, db: SessionDep, event_id: str) -> dict:
+    async def get_event(self, db: SessionDep, event_id: UUID) -> Event:
         not_found_key = f"events:not_found:{event_id}"
 
         if await self.cache.has(not_found_key):
             raise EventNotFoundError(f"Event with id {event_id} not found")
 
-        async def _fetch_from_db():
+        async def _fetch_from_db() -> Event:
             result = await db.execute(select(Event).where(Event.id == event_id))
             event = result.scalar_one_or_none()
 
@@ -88,10 +89,6 @@ class EventService:
             expire_seconds=60,
         )
 
-    async def create_event(
-        self, db: SessionDep, event_data: EventCreate
-    ) -> dict:
-        # TODO: move to worker (batched)
-        db.add(Event(**event_data.model_dump()))
-        await db.commit()
-        return {"status": "success", "queue_id": "msg_id"}
+    async def create_event(self, event_data: EventCreate) -> dict:
+        stream_id = await self.cache.xadd("events", event_data.model_dump(mode="json"))
+        return {"status": "success", "queue_id": stream_id}

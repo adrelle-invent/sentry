@@ -14,6 +14,7 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 T = TypeVar("T")
+StreamValue = bytes | bytearray | memoryview | str | float
 
 redis = Redis(
     host=settings.REDIS_HOST,
@@ -109,7 +110,6 @@ class Cache:
             logger.warning("Cache expire error for key=%s: %s", key, e)
             return False
 
-
     async def get_or_set_with_lock(
         self,
         key: str,
@@ -150,6 +150,13 @@ class Cache:
             logger.warning("redis_lock_error_fallback", key=key, error=str(e))
             return await fetch_func()
 
+    async def xadd(self, stream_key: str, raw: dict):
+        try:
+            fields: dict[StreamValue, StreamValue] = {"payload": self._serialize_value(raw)}
+            return await self.client.xadd(stream_key, fields)
+        except Exception as e:
+            logger.warning("Cache xadd error for key=%s: %s", stream_key, e)
+            return None
 
 cache = Cache(client=redis)
 
